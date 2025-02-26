@@ -3,8 +3,12 @@ import { join } from "node:path";
 import database from "infra/database";
 
 async function migrations(request, response) {
-  if (!["GET", "POST"].includes(request.method)) {
-    return response.status(405).json({ message: "Method not supported" });
+  const allowMethods = ["GET", "POST"];
+
+  if (!allowMethods.includes(request.method)) {
+    return response
+      .status(405)
+      .json({ message: `Method "${request.method}" not allowed` });
   }
 
   const dbClient = await database.getNewClient();
@@ -40,7 +44,8 @@ async function migrations(request, response) {
       return response.status(200).json(pendingMigrations);
     }
   } catch (error) {
-    return response.status(500).end();
+    console.error(error);
+    throw error;
   } finally {
     await dbClient.end();
   }
