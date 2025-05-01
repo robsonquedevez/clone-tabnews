@@ -1,4 +1,5 @@
 import database from "infra/database";
+import password from "models/password";
 import { ValidationError, NotFoundError } from "infra/errors";
 
 async function findOneByUsername(username) {
@@ -36,6 +37,7 @@ async function create(inputUserValues) {
   await validateUniqueUsername(inputUserValues.username);
   await validateUniqueEmail(inputUserValues.email);
   await validatePasswordRequirements(inputUserValues.password);
+  await hashPasswordInObject(inputUserValues);
 
   const newUser = await runInserQuery(inputUserValues);
 
@@ -116,6 +118,11 @@ async function create(inputUserValues) {
           "Informe uma senha que contenha: letras minúscula, letras maiúscula, número, caractere especial(@$!%*?&) e no mínimo 6 caracteres.",
       });
     }
+  }
+
+  async function hashPasswordInObject(inputUserValues) {
+    const hashedPassword = await password.hash(inputUserValues.password);
+    inputUserValues.password = hashedPassword;
   }
 
   async function runInserQuery({ username, email, password }) {
