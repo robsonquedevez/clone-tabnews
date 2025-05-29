@@ -3,6 +3,7 @@ import {
   MethodNotAllowedError,
   ValidationError,
   NotFoundError,
+  UnauthorizedError,
 } from "infra/errors";
 
 function onNoMatchHandler(_, response) {
@@ -12,13 +13,16 @@ function onNoMatchHandler(_, response) {
 }
 
 function onErrorHandler(error, _, response) {
-  if (error instanceof ValidationError || error instanceof NotFoundError) {
+  if (
+    error instanceof ValidationError ||
+    error instanceof NotFoundError ||
+    error instanceof UnauthorizedError
+  ) {
     return response.status(error.statusCode).json(error);
   }
 
   const publucErrorObject = new InternalServerError({
     cause: error,
-    statusCode: error.statusCode,
   });
   console.error(publucErrorObject);
   response.status(publucErrorObject.statusCode).json(publucErrorObject);
