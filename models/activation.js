@@ -40,22 +40,26 @@ Time QDVZ`,
   });
 }
 
-async function findOneByUserId(userId) {
-  const newToken = await runSelectQuery(userId);
+async function findOneValidById(tokenProvider) {
+  const newToken = await runSelectQuery(tokenProvider);
   return newToken;
 
-  async function runSelectQuery(userId) {
+  async function runSelectQuery(tokenProvider) {
     const result = await database.query({
       text: `
         SELECT
-          id
+          *
         FROM 
           user_activation_tokens
         WHERE 
-          user_id = $1
+          id = $1
+        AND
+          expires_at > NOW()
+        AND 
+          used_at IS NULL
         LIMIT 1;
       `,
-      values: [userId],
+      values: [tokenProvider],
     });
 
     return result.rows[0];
@@ -65,7 +69,7 @@ async function findOneByUserId(userId) {
 const activation = {
   create,
   sendEmailToUser,
-  findOneByUserId,
+  findOneValidById,
 };
 
 export default activation;
