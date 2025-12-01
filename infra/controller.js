@@ -7,6 +7,7 @@ import {
   UnauthorizedError,
   ForbiddenError,
 } from "infra/errors";
+import authorization from "models/authorization";
 import session from "models/session";
 import user from "models/user";
 
@@ -95,7 +96,7 @@ function canRequest(feature) {
   return function canRequestMiddleware(request, response, next) {
     const userTryToRequest = request.context.user;
 
-    if (userTryToRequest.features.includes(feature)) {
+    if (authorization.can(userTryToRequest, feature)) {
       return next();
     }
 
