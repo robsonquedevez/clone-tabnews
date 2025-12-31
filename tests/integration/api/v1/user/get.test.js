@@ -136,7 +136,7 @@ describe("GET /api/v1/user", () => {
 
       expect(responseBody).toEqual({
         action: 'Verifique se o seu usuário possui a feature "read:session"',
-        message: "Você não possui permissão para criar essa ação.",
+        message: "Você não possui permissão para executar esta ação.",
         name: "ForbiddenError",
         status_code: 403,
       });

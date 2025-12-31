@@ -1,10 +1,12 @@
 import { createRouter } from "next-connect";
 import controller from "infra/controller";
 import activation from "models/activation";
+import { NotFoundError } from "infra/errors";
 
 const router = createRouter();
 
-router.patch(patchHandler);
+router.use(controller.injectAnonymousOrUser);
+router.patch(controller.canRequest("read:activation_token"), patchHandler);
 
 export default router.handler(controller.errorHandlers);
 
@@ -14,10 +16,18 @@ async function patchHandler(request, response) {
   const validActivationToken =
     await activation.findOneValidById(activationTokenId);
 
-  const usedActivationToken =
-    await activation.markTokenAsUsed(activationTokenId);
+  if (!validActivationToken) {
+    throw new NotFoundError({
+      message:
+        "O token de ativação utilizado não foi encontrado no sistema ou expirou.",
+      action: "Faça um novo cadastro.",
+    });
+  }
 
   await activation.activateUserByUserId(validActivationToken.user_id);
+
+  const usedActivationToken =
+    await activation.markTokenAsUsed(activationTokenId);
 
   return response.status(200).json(usedActivationToken);
 }
