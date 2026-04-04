@@ -32,6 +32,7 @@ describe("POST /api/v1/users", () => {
         username: "mickaelscot",
         email: "scot@dundermifflin.com",
         password: responseBody.password,
+        features: ["read:activation_token"],
         created_at: responseBody.created_at,
         update_at: responseBody.update_at,
       });
@@ -221,6 +222,38 @@ describe("POST /api/v1/users", () => {
         action:
           "Informe uma senha que contenha: letras minúscula, letras maiúscula, número, caractere especial(@$!%*?&) e no mínimo 6 caracteres.",
         status_code: 400,
+      });
+    });
+  });
+
+  describe("Default User", () => {
+    test("With unique and valid data", async () => {
+      const user1 = await orchestrator.createUser();
+      await orchestrator.activateUser(user1);
+      const user1SessionObject = await orchestrator.createSession(user1.id);
+
+      const user2Response = await fetch("http://localhost:3000/api/v1/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `session_id=${user1SessionObject.token}`,
+        },
+        body: JSON.stringify({
+          username: "usuariologado",
+          email: "usuariologado@teste.com",
+          password: "Abc123@",
+        }),
+      });
+
+      expect(user2Response.status).toBe(403);
+
+      const user2ResponseBody = await user2Response.json();
+
+      expect(user2ResponseBody).toEqual({
+        name: "ForbiddenError",
+        message: "Você não possui permissão para executar esta ação.",
+        action: 'Verifique se o seu usuário possui a feature "create:user"',
+        status_code: 403,
       });
     });
   });
